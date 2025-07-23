@@ -1,19 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (email === 'admin@example.com' && password === '123456') {
-      localStorage.setItem('connected', 'true');
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await axios.post('http://localhost:5000/api/users/login', {
+        email,
+        password
+      });
+
+      // Store token in localStorage
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Redirect to home page
       navigate('/');
-    } else {
-      setError('Email ou mot de passe incorrect');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -41,9 +56,10 @@ const Login = () => {
           />
           <button
             type="submit"
-            className="w-full bg-[#002f5f] text-white font-semibold py-2 rounded hover:bg-[#001f3f] transition"
+            disabled={loading}
+            className={`w-full bg-[#002f5f] text-white font-semibold py-2 rounded hover:bg-[#001f3f] transition ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Se connecter
+            {loading ? 'Connexion en cours...' : 'Se connecter'}
           </button>
         </form>
       </div>

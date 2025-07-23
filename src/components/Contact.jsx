@@ -1,21 +1,52 @@
 import { useState } from "react";
+import axios from "axios";
 
 export default function ContactSection() {
-  const [form, setForm] = useState({ nom: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({
+    success: null,
+    message: "",
+  });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nom || !form.email || !form.message) {
-      alert("Veuillez remplir tous les champs.");
+    
+    if (!form.name || !form.email || !form.message) {
+      setSubmitStatus({
+        success: false,
+        message: "Veuillez remplir tous les champs.",
+      });
       return;
     }
-    console.log("Message envoyé :", form);
-    alert("Merci pour votre message !");
-    setForm({ nom: "", email: "", message: "" });
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await axios.post("http://localhost:5000/api/contact/", {
+        name: form.name,
+        email: form.email,
+        message: form.message,
+      });
+
+      setSubmitStatus({
+        success: true,
+        message: "Merci pour votre message ! Nous vous contacterons bientôt.",
+      });
+      setForm({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setSubmitStatus({
+        success: false,
+        message: "Une erreur est survenue. Veuillez réessayer plus tard.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -24,12 +55,25 @@ export default function ContactSection() {
         {/* Formulaire */}
         <div>
           <h2 className="text-3xl font-bold text-[#002f5f] mb-6">Contactez-nous</h2>
+          
+          {submitStatus.message && (
+            <div
+              className={`mb-4 p-3 rounded-md ${
+                submitStatus.success
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {submitStatus.message}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
-              name="nom"
+              name="name"
               placeholder="Votre nom"
-              value={form.nom}
+              value={form.name}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#002f5f]"
@@ -53,9 +97,12 @@ export default function ContactSection() {
             />
             <button
               type="submit"
-              className="bg-[#002f5f] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#014080] transition"
+              disabled={isSubmitting}
+              className={`bg-[#002f5f] text-white px-6 py-2 rounded-md font-semibold hover:bg-[#014080] transition ${
+                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+              }`}
             >
-              Envoyer
+              {isSubmitting ? "Envoi en cours..." : "Envoyer"}
             </button>
           </form>
         </div>

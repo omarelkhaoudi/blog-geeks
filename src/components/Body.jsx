@@ -1,53 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
-
-const isConnected = true;
+import axios from 'axios';
 
 const Body = () => {
   const navigate = useNavigate();
-
-  const [articles, setArticles] = useState([
-    {
-      id: 1,
-      title: 'Découverte de Marrakech',
-      image: 'https://images.unsplash.com/photo-1653323792487-6ecc6217040b',
-      description: 'Explorez les souks colorés et les monuments historiques de la ville ocre.',
-    },
-    {
-      id: 2,
-      title: 'Road trip dans le désert',
-      image: 'https://images.unsplash.com/photo-1526994387180-9557a434b046',
-      description: 'Une aventure inoubliable à travers les dunes dorées du Sahara.',
-    },
-    {
-      id: 3,
-      title: 'Plages de la côte atlantique',
-      image: 'https://plus.unsplash.com/premium_photo-1697729733847-0ed51661e005',
-      description: 'Détente et surf sur les plages magnifiques d’Essaouira et Agadir.',
-    },
-  ]);
-
+  const [articles, setArticles] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    id: null,
     title: '',
-    description: '',
+    content: '',
     image: '',
   });
+  const [isConnected, setIsConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleDelete = (id) => {
-    const updated = articles.filter((a) => a.id !== id);
-    setArticles(updated);
+  // Check authentication status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsConnected(!!token);
+    fetchBlogs();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/blogs/');
+      setArticles(response.data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching blogs:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/api/blogs/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchBlogs(); // Refresh the list after deletion
+    } catch (err) {
+      console.error('Error deleting blog:', err);
+    }
   };
 
   const handleAddClick = () => {
-    setFormData({ id: null, title: '', description: '', image: '' });
+    setFormData({ title: '', content: '', image: '' });
     setShowForm(!showForm);
   };
 
   const handleEditClick = (article) => {
-    setFormData(article);
+    setFormData({
+      _id: article._id,
+      title: article.title,
+      content: article.content,
+      image: article.image,
+    });
     setShowForm(true);
   };
 
@@ -55,22 +66,42 @@ const Body = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.id) {
-      setArticles(
-        articles.map((a) => (a.id === formData.id ? formData : a))
-      );
-    } else {
-      const newArticle = {
-        id: Date.now(),
-        ...formData,
+    try {
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       };
-      setArticles([newArticle, ...articles]);
+
+      if (formData._id) {
+        // Update existing blog
+        await axios.put(
+          `http://localhost:5000/api/blogs/${formData._id}`,
+          formData,
+          config
+        );
+      } else {
+        // Create new blog
+        await axios.post(
+          'http://localhost:5000/api/blogs/',
+          formData,
+          config
+        );
+      }
+
+      setShowForm(false);
+      fetchBlogs(); // Refresh the list after update/create
+    } catch (err) {
+      console.error('Error submitting blog:', err);
     }
-    setFormData({ id: null, title: '', description: '', image: '' });
-    setShowForm(false);
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-white px-6 py-10 text-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white px-6 py-10">
@@ -99,9 +130,9 @@ const Body = () => {
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#002f5f]"
           />
           <textarea
-            name="description"
-            placeholder="Description"
-            value={formData.description}
+            name="content"
+            placeholder="Contenu"
+            value={formData.content}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#002f5f] resize-none"
@@ -109,7 +140,7 @@ const Body = () => {
           />
           <input
             name="image"
-            placeholder="URL de l’image"
+            placeholder="URL de l'image"
             value={formData.image}
             onChange={handleChange}
             required
@@ -119,18 +150,18 @@ const Body = () => {
             type="submit"
             className="w-full bg-[#002f5f] text-white py-2 rounded hover:bg-[#001c3b] transition"
           >
-            Publier
+            {formData._id ? 'Mettre à jour' : 'Publier'}
           </button>
         </form>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {articles.map((article) => (
-          <div key={article.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+          <div key={article._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
             <img src={article.image} alt={article.title} className="w-full h-48 object-cover" />
             <div className="p-5">
               <h2 className="text-xl font-semibold text-[#002f5f] mb-2">{article.title}</h2>
-              <p className="text-gray-700 mb-4">{article.description}</p>
+              <p className="text-gray-700 mb-4">{article.content}</p>
               <div className="flex justify-end gap-3">
                 {isConnected && (
                   <>
@@ -138,13 +169,13 @@ const Body = () => {
                       className="flex items-center gap-1 px-3 py-1 text-sm bg-[#002f5f] text-white rounded hover:bg-[#001c3b]"
                       onClick={() => handleEditClick(article)}
                     >
-                      <Pencil size={16} /> Edit
+                      <Pencil size={16} /> Modifier
                     </button>
                     <button
                       className="flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                      onClick={() => handleDelete(article.id)}
+                      onClick={() => handleDelete(article._id)}
                     >
-                      <Trash2 size={16} /> Delete
+                      <Trash2 size={16} /> Supprimer
                     </button>
                   </>
                 )}
