@@ -1,19 +1,20 @@
-import './App.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import NotFound from './pages/NotFound'
+// src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Body from './components/Body';
+import PostPage from './PostPage';
+import Login from './pages/Login';
 
-function App() {
+const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='*' element={<NotFound />} />
+        <Route path="/" element={<Body />} />
+        <Route path="/post/:id" element={<PostPage />} />
+        <Route path='/login' element={<Login/>} />
       </Routes>
     </Router>
-  )
-}
+  );
+};
 
-export default App
+export default App;
