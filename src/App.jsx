@@ -4,8 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Body from './components/Body';
 import PostPage from './PostPage';
 import Login from './pages/Login';
+import Home from './pages/Home'
+import NotFound from './pages/NotFound'
 
-const App = () => {
+function App() {
   return (
     <Router>
       <Routes>
