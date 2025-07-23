@@ -6,7 +6,7 @@ import './Navbar.css'; // Optionnel, si tu veux ajouter du style
 const Navbar = () => {
   return (
     <nav className="navbar">
-      <h2>MonSite</h2>
+      <h2>Voyage au Maroc</h2>
       <ul>
         <li><Link to="/">Accueil</Link></li>
         <li><Link to="/a-propos">À propos</Link></li>
