@@ -1,9 +1,19 @@
-import React from 'react'
+// Navbar.js
+import React from "react";
+import { Link } from "react-router-dom";
+import './Navbar.css'; // Optionnel, si tu veux ajouter du style
 
 const Navbar = () => {
   return (
-    <div>Navbar</div>
-  )
-}
+    <nav className="navbar">
+      <h2>MonSite</h2>
+      <ul>
+        <li><Link to="/">Accueil</Link></li>
+        <li><Link to="/a-propos">À propos</Link></li>
+        <li><Link to="/contact">Contact</Link></li>
+      </ul>
+    </nav>
+  );
+};
 
-export default Navbar
+export default Navbar;
